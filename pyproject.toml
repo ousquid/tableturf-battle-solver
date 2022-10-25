@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "tableturf-battle-solver"
+version = "0.1.0"
+description = ""
+authors = ["ousquid"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "tableturf_battle_solver"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+numpy = "^1.23.4"
+ipython = "^8.5.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
