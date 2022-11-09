@@ -1,12 +1,16 @@
-from typing import List, Tuple
+from typing import List, Tuple, Self
 from enum import Enum
 import glob
+from tqdm import tqdm
 import numpy as np
 import os
+import copy
 
 
 class Point:
-    pass
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
 
 
 class Rotation(Enum):
@@ -14,6 +18,10 @@ class Rotation(Enum):
     RIGHT = 1
     BOTTOM = 2
     LEFT = 3
+
+    @classmethod
+    def get_values(cls):
+        return [i.value for i in cls]
 
 
 class Card:
@@ -62,10 +70,11 @@ class Placement:
         self.point = point
         self.rotation = rotation
 
-
-class Solver:
-    def search() -> Tuple[List[Card], List[Point]]:
-        pass
+    def get_pattern(self) -> np.ndarray:
+        pattern = self.card.pattern
+        for _ in range(int(self.rotation)):
+            pattern = np.rot90(pattern)
+        return pattern
 
 
 class Stage:
@@ -73,6 +82,48 @@ class Stage:
         self.number = number
         self.name = name
         self.pattern = pattern
+
+    def get_points(self):
+        y, x = self.pattern.shape
+        for y in range(y):
+            for x in range(x):
+                if not self.pattern[y, x]:
+                    yield Point(x, y)
+
+    def get_slice(self, place: Placement) -> np.ndarray:
+        card_pat = place.get_pattern()
+        card_h, card_w = card_pat.shape
+        return self.pattern[
+            place.point.y : place.point.y + card_h,
+            place.point.x : place.point.x + card_w,
+        ]
+
+    def can_be_put(self, place: Placement) -> bool:
+        card_pat = place.get_pattern()
+        card_h, card_w = card_pat.shape
+        stage_h, stage_w = stage.pattern.shape
+        # マップからはみ出ていないか
+        if card_h + place.point.y > stage_h or card_w + place.point.x > stage_w:
+            return False
+        # 他のカードと重ならないか
+        stage_pat = stage.get_slice(place)
+
+        if np.any(card_pat & stage_pat):
+            return False
+        return True
+
+    def put_card(self, place: Placement) -> Self:
+        card_pat = place.get_pattern()
+        new_stage = copy.deepcopy(stage)
+        stage_pat = new_stage.get_slice(place)
+        stage_pat += card_pat
+        return new_stage
+
+    def eval(self) -> int:
+        return self.fill_eval()
+
+    def fill_eval(self) -> int:
+        return self.pattern.sum()
 
     @staticmethod
     def load_text(path: str):
@@ -93,26 +144,41 @@ class Stage:
         return Stage(number, name, pattern)
 
 
-def fill_eval(stage: Stage) -> int:
-    pass
+class Solver:
+    def __init__(self):
+        pass
 
+    def search(self, stage: Stage, cards: List[Card]) -> Stage:
+        if len(cards) == 0:
+            return stage
 
-def can_be_put(stage: Stage, card: Card) -> bool:
-    # マップからはみ出ていないか
-    # 他のカードと重ならないか
-    pass
-
-
-def rotate() -> Card:
-    pass
+        best_stage = stage
+        sorted_cards = sorted(cards, key=lambda x: x.ink_spaces)
+        for c in sorted_cards:
+            if len(cards) == 2:
+                print(f"cards:{c}")
+            for rotation in Rotation.get_values():
+                if len(cards) == 2:
+                    print(f"rotation:{rotation}")
+                for point in stage.get_points():
+                    placement = Placement(c, point, rotation)
+                    if stage.can_be_put(placement):
+                        new_stage = stage.put_card(placement)
+                        new_cards = copy.copy(cards)
+                        new_cards.remove(c)
+                        child_best_stage = self.search(new_stage, new_cards)
+                        if child_best_stage.eval() > best_stage.eval():
+                            best_stage = child_best_stage
+        return best_stage
 
 
 if __name__ == "__main__":
     stage = Stage.load_text("stages/01.txt")
-    cards = Card.load_dir("cards/*.txt")
+    # cards = Card.load_dir("cards/*.txt")
+    cards = [Card.load_text(txt) for txt in ["cards/001.txt", "cards/002.txt"]]
     print(cards)
 
-    solver = Solver.new()
+    solver = Solver()
     ans = solver.search(stage, cards)
 
 #
