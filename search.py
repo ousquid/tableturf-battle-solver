@@ -114,7 +114,7 @@ class Stage:
 
     def put_card(self, place: Placement) -> Self:
         card_pat = place.get_pattern()
-        new_stage = copy.deepcopy(stage)
+        new_stage = copy.deepcopy(self)
         stage_pat = new_stage.get_slice(place)
         stage_pat += card_pat
         return new_stage
@@ -155,11 +155,7 @@ class Solver:
         best_stage = stage
         sorted_cards = sorted(cards, key=lambda x: x.ink_spaces)
         for c in sorted_cards:
-            if len(cards) == 2:
-                print(f"cards:{c}")
             for rotation in Rotation.get_values():
-                if len(cards) == 2:
-                    print(f"rotation:{rotation}")
                 for point in stage.get_points():
                     placement = Placement(c, point, rotation)
                     if stage.can_be_put(placement):
