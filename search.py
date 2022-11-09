@@ -155,7 +155,11 @@ class Solver:
         best_stage = stage
         sorted_cards = sorted(cards, key=lambda x: x.ink_spaces)
         for c in sorted_cards:
+            if len(cards) == 3:
+                print(f"card:{c}")
             for rotation in Rotation.get_values():
+                if len(cards) == 3:
+                    print(f"rotation:{rotation}")
                 for point in stage.get_points():
                     placement = Placement(c, point, rotation)
                     if stage.can_be_put(placement):
@@ -171,7 +175,10 @@ class Solver:
 if __name__ == "__main__":
     stage = Stage.load_text("stages/01.txt")
     # cards = Card.load_dir("cards/*.txt")
-    cards = [Card.load_text(txt) for txt in ["cards/001.txt", "cards/002.txt"]]
+    cards = [
+        Card.load_text(txt)
+        for txt in ["cards/001.txt", "cards/002.txt", "cards/003.txt"]
+    ]
     print(cards)
 
     solver = Solver()
