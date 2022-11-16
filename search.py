@@ -101,12 +101,12 @@ class Stage:
     def can_be_put(self, place: Placement) -> bool:
         card_pat = place.get_pattern()
         card_h, card_w = card_pat.shape
-        stage_h, stage_w = stage.pattern.shape
+        stage_h, stage_w = self.pattern.shape
         # マップからはみ出ていないか
         if card_h + place.point.y > stage_h or card_w + place.point.x > stage_w:
             return False
         # 他のカードと重ならないか
-        stage_pat = stage.get_slice(place)
+        stage_pat = self.get_slice(place)
 
         if np.any(card_pat & stage_pat):
             return False
@@ -171,19 +171,20 @@ class Solver:
                             best_stage = child_best_stage
         return best_stage
 
-
-if __name__ == "__main__":
+def main():
     stage = Stage.load_text("stages/01.txt")
     # cards = Card.load_dir("cards/*.txt")
     cards = [
         Card.load_text(txt)
-        for txt in ["cards/001.txt", "cards/002.txt", "cards/003.txt"]
+        for txt in ["cards/001.txt", "cards/002.txt"]
     ]
     print(cards)
 
     solver = Solver()
-    ans = solver.search(stage, cards)
+    return solver.search(stage, cards)
 
+if __name__ == "__main__":
+    ans = main()
 #
 # ________
 # ________

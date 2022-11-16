@@ -17,3 +17,26 @@
 # requirements
 
 Python 3.11
+
+# install
+
+- https://github.com/pyenv/pyenv-installer
+
+```
+$ curl https://pyenv.run | bash
+```
+
+```
+export PYENV_ROOT="$HOME/.pyenv"
+command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
+```
+
+```
+$ pyenv install 3.11.0
+$ pyenv global 3.11.0
+```
+
+```
+$ poetry env use python3.11
+```
