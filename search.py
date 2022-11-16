@@ -122,6 +122,9 @@ class Stage:
     def eval(self) -> int:
         return self.fill_eval()
 
+    def max_eval(self, cards: List[Card]) -> int:
+        return self.pattern.sum() + sum([c.pattern.sum() for c in cards])
+
     def fill_eval(self) -> int:
         return self.pattern.sum()
 
@@ -154,6 +157,7 @@ class Solver:
 
         best_stage = stage
         sorted_cards = sorted(cards, key=lambda x: x.ink_spaces)
+        max_eval = stage.max_eval(cards)
         for c in sorted_cards:
             if len(cards) == 3:
                 print(f"card:{c}")
@@ -166,6 +170,8 @@ class Solver:
                         new_stage = stage.put_card(placement)
                         new_cards = copy.copy(cards)
                         new_cards.remove(c)
+                        if new_stage.eval() == max_eval:
+                            return new_stage
                         child_best_stage = self.search(new_stage, new_cards)
                         if child_best_stage.eval() > best_stage.eval():
                             best_stage = child_best_stage
@@ -176,7 +182,7 @@ def main():
     # cards = Card.load_dir("cards/*.txt")
     cards = [
         Card.load_text(txt)
-        for txt in ["cards/001.txt", "cards/002.txt"]
+        for txt in ["cards/001.txt", "cards/002.txt", "cards/003.txt"]
     ]
     print(cards)
 
