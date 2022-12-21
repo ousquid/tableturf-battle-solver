@@ -5,7 +5,8 @@ from tqdm import tqdm
 import numpy as np
 import os
 import copy
-
+from itertools import combinations, permutations
+from scipy import ndimage
 
 class Point:
     def __init__(self, x, y):
@@ -76,12 +77,16 @@ class Placement:
             pattern = np.rot90(pattern)
         return pattern
 
+    def __repr__(self):
+        return f"<Card: {self.card.number}, {self.card.ink_spaces=}, {self.point.x=}, {self.point.y=}>"
+
 
 class Stage:
     def __init__(self, number: int, name: str, pattern: np.ndarray):
         self.number = number
         self.name = name
         self.pattern = pattern
+        self.place_hist = list()
 
     def get_points(self):
         y, x = self.pattern.shape
@@ -112,11 +117,22 @@ class Stage:
             return False
         return True
 
+    def neightbor_pattern(self, place: Placement) -> bool:
+        kernel = ndimage.generate_binary_structure(2, 2)
+        dilated = ndimage.binary_dilation(self.pattern, structure=kernel)
+        neighbor = dilated - self.pattern
+        neighbor_stage = Stage(0, "", neighbor)
+        stage_pat = neighbor_stage.get_slice(place)
+        card_pat = place.get_pattern()
+        return np.any(card_pat & stage_pat)
+
     def put_card(self, place: Placement) -> Self:
         card_pat = place.get_pattern()
         new_stage = copy.deepcopy(self)
         stage_pat = new_stage.get_slice(place)
         stage_pat += card_pat
+
+        new_stage.place_hist.append(place)
         return new_stage
 
     def eval(self) -> int:
@@ -151,6 +167,18 @@ class Solver:
     def __init__(self):
         pass
 
+    def search_combo(self, n: int, stage: Stage, cards: List[Card]) -> Stage:
+        best_combination = stage
+        for c in combinations(cards, n):
+            best_permutation = stage
+            for p in permutations(c, n):
+                ans = self.search(copy.deepcopy(stage), list(p))
+                if ans.eval() > best_permutation.eval():
+                    best_permutation = ans
+            if best_permutation.eval() > best_combination.eval():
+                best_combination = best_permutation
+        return best_combination
+
     def search(self, stage: Stage, cards: List[Card]) -> Stage:
         if len(cards) == 0:
             return stage
@@ -166,7 +194,7 @@ class Solver:
                     print(f"rotation:{rotation}")
                 for point in stage.get_points():
                     placement = Placement(c, point, rotation)
-                    if stage.can_be_put(placement):
+                    if stage.can_be_put(placement) and stage.neightbor_pattern(placement):
                         new_stage = stage.put_card(placement)
                         new_cards = copy.copy(cards)
                         new_cards.remove(c)
@@ -187,7 +215,7 @@ def main():
     print(cards)
 
     solver = Solver()
-    return solver.search(stage, cards)
+    return solver.search_combo(4, stage, cards)
 
 if __name__ == "__main__":
     ans = main()
