@@ -159,10 +159,10 @@ class Solver:
         sorted_cards = sorted(cards, key=lambda x: x.ink_spaces)
         max_eval = stage.max_eval(cards)
         for c in sorted_cards:
-            if len(cards) == 3:
+            if len(cards) == 6:
                 print(f"card:{c}")
             for rotation in Rotation.get_values():
-                if len(cards) == 3:
+                if len(cards) == 6:
                     print(f"rotation:{rotation}")
                 for point in stage.get_points():
                     placement = Placement(c, point, rotation)
@@ -170,9 +170,9 @@ class Solver:
                         new_stage = stage.put_card(placement)
                         new_cards = copy.copy(cards)
                         new_cards.remove(c)
-                        if new_stage.eval() == max_eval:
-                            return new_stage
                         child_best_stage = self.search(new_stage, new_cards)
+                        if child_best_stage.eval() == max_eval:
+                            return child_best_stage
                         if child_best_stage.eval() > best_stage.eval():
                             best_stage = child_best_stage
         return best_stage
@@ -182,7 +182,7 @@ def main():
     # cards = Card.load_dir("cards/*.txt")
     cards = [
         Card.load_text(txt)
-        for txt in ["cards/001.txt", "cards/002.txt", "cards/003.txt"]
+        for txt in ["cards/001.txt", "cards/002.txt", "cards/003.txt", "cards/004.txt", "cards/095.txt", "cards/144.txt",]
     ]
     print(cards)
 
