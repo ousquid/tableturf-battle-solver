@@ -7,6 +7,7 @@ import os
 import copy
 from itertools import combinations, permutations
 from scipy import ndimage
+import colorama  as cr
 
 class Point:
     def __init__(self, x, y):
@@ -86,6 +87,7 @@ class Stage:
         self.number = number
         self.name = name
         self.pattern = pattern
+        self.init_pattern = pattern.copy()
         self.place_hist = list()
 
     def get_points(self):
@@ -95,13 +97,15 @@ class Stage:
                 if not self.pattern[y, x]:
                     yield Point(x, y)
 
+    def get_slice_indices(self, place: Placement, pattern: np.ndarray):
+        pat_h, pat_w = pattern.shape
+        return (place.point.y, place.point.y + pat_h,
+                place.point.x, place.point.x + pat_w)
+
     def get_slice(self, place: Placement) -> np.ndarray:
         card_pat = place.get_pattern()
-        card_h, card_w = card_pat.shape
-        return self.pattern[
-            place.point.y : place.point.y + card_h,
-            place.point.x : place.point.x + card_w,
-        ]
+        y_start, y_end, x_start, x_end = self.get_slice_indices(place, card_pat)
+        return self.pattern[y_start:y_end, x_start:x_end]
 
     def can_be_put(self, place: Placement) -> bool:
         card_pat = place.get_pattern()
@@ -143,6 +147,36 @@ class Stage:
 
     def fill_eval(self) -> int:
         return self.pattern.sum()
+
+    def draw(self):
+        colormap = [
+            cr.Fore.BLUE,
+            cr.Fore.CYAN,
+            cr.Fore.GREEN,
+            cr.Fore.LIGHTBLACK_EX,
+            cr.Fore.LIGHTBLUE_EX,
+            cr.Fore.LIGHTCYAN_EX,
+            cr.Fore.LIGHTGREEN_EX,
+            cr.Fore.LIGHTMAGENTA_EX,
+            cr.Fore.LIGHTRED_EX,
+            cr.Fore.LIGHTWHITE_EX,
+            cr.Fore.LIGHTYELLOW_EX,
+            cr.Fore.MAGENTA,
+            cr.Fore.RED,
+            cr.Fore.RESET,
+            cr.Fore.WHITE,
+            cr.Fore.YELLOW]
+
+        canvas = np.full(self.pattern.shape, cr.Fore.WHITE + '.').astype(object)
+        canvas[self.init_pattern == 1] = cr.Fore.YELLOW + "X"
+        for i, p in enumerate(self.place_hist):
+            card_pat = p.get_pattern()
+            y_start, y_end, x_start, x_end = self.get_slice_indices(p, card_pat)
+            canvas_pat = canvas[y_start:y_end, x_start:x_end]
+            canvas_pat[card_pat == 1] = colormap[i]+"0"
+
+        for r in canvas:
+            print("".join(r))
 
     @staticmethod
     def load_text(path: str):
