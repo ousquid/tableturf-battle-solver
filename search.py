@@ -52,8 +52,10 @@ class Card:
 
         for y, line in enumerate(lines):
             for x, p in enumerate(line):
-                if p == "o" or p == "x":
+                if p == "x":
                     pattern[y, x] = 1
+                elif p == "o":
+                    pattern[y, x] = 2
 
         number = int(os.path.splitext(os.path.basename(path))[0])
         name = "Kojake"
@@ -117,18 +119,19 @@ class Stage:
         # 他のカードと重ならないか
         stage_pat = self.get_slice(place)
 
-        if np.any(card_pat & stage_pat):
+        if np.any((card_pat * stage_pat) > 0):
             return False
         return True
 
     def neightbor_pattern(self, place: Placement) -> bool:
+        nosp_pattern = np.where(self.pattern == 2, 1, self.pattern)
         kernel = ndimage.generate_binary_structure(2, 2)
-        dilated = ndimage.binary_dilation(self.pattern, structure=kernel)
+        dilated = ndimage.binary_dilation(nosp_pattern, structure=kernel)
         neighbor = dilated - self.pattern
         neighbor_stage = Stage(0, "", neighbor)
         stage_pat = neighbor_stage.get_slice(place)
         card_pat = place.get_pattern()
-        return np.any(card_pat & stage_pat)
+        return np.any((card_pat * stage_pat) > 0)
 
     def put_card(self, place: Placement) -> Self:
         card_pat = place.get_pattern()
@@ -168,12 +171,13 @@ class Stage:
             cr.Fore.YELLOW]
 
         canvas = np.full(self.pattern.shape, cr.Fore.WHITE + '.').astype(object)
-        canvas[self.init_pattern == 1] = cr.Fore.YELLOW + "X"
+        canvas[self.init_pattern == 1] = cr.Fore.YELLOW + "0"
         for i, p in enumerate(self.place_hist):
             card_pat = p.get_pattern()
             y_start, y_end, x_start, x_end = self.get_slice_indices(p, card_pat)
             canvas_pat = canvas[y_start:y_end, x_start:x_end]
             canvas_pat[card_pat == 1] = colormap[i]+"0"
+            canvas_pat[card_pat == 2] = colormap[i]+"X"
 
         for r in canvas:
             print("".join(r))
