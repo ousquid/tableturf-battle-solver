@@ -17,6 +17,7 @@ colorama = "^0.4.6"
 
 [tool.poetry.group.dev.dependencies]
 ipython = "^8.6.0"
+ipykernel = "^6.21.2"
 
 [build-system]
 requires = ["poetry-core"]
