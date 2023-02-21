@@ -43,8 +43,8 @@ class Solver:
                         new_cards = copy.copy(cards)
                         new_cards.remove(c)
                         child_best_stage = self.search(new_stage, new_cards)
-                        if self.evaluator.eval(child_best_stage) == max_eval:
-                            return child_best_stage
+                        #if self.evaluator.eval(child_best_stage) == max_eval:
+                        #    return child_best_stage
                         if self.evaluator.eval(child_best_stage) > self.evaluator.eval(best_stage):
                             best_stage = child_best_stage
         return best_stage
@@ -54,12 +54,11 @@ def main():
     # cards = Card.load_dir("cards/*.txt")
     cards = [
         Card.load_text(txt)
-        for txt in ["cards/001.txt", "cards/002.txt", "cards/003.txt", "cards/004.txt", "cards/095.txt", "cards/144.txt",]
+        # for txt in ["cards/001.txt", "cards/002.txt", "cards/003.txt", "cards/004.txt", "cards/095.txt", "cards/144.txt",]
+        for txt in ["cards/001.txt", "cards/002.txt"]
     ]
-    print(cards)
-
     solver = Solver()
-    return solver.search_combo(4, stage, cards)
+    return solver.search_combo(2, stage, cards)
 
 if __name__ == "__main__":
     ans = main()
@@ -89,3 +88,6 @@ if __name__ == "__main__":
 # ********
 # ********
 #
+
+
+
