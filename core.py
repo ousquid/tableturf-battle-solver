@@ -16,6 +16,9 @@ class Point:
     def __eq__(self, rhs:Self) -> bool:
         return (self.x == rhs.x) and (self.y == rhs.y)
 
+    def __hash__(self) -> int:
+        return hash((self.x, self.y))
+
     def __add__(self, rhs:Self) -> Self:
         return Point(self.x + rhs.x, self.y + rhs.y)
 
@@ -37,7 +40,8 @@ class Cell:
         return self.point == rhs.point # ignore sp!!
 
     def __hash__(self):
-        return hash((self.point.x, self.point.y)) # ignore sp!!
+        #return hash((self.point.x, self.point.y)) # ignore sp!!
+        return hash(self.point)
 
     def __repr__(self):
         #return f"<Cell: {self.point.x=}, {self.point.y=}>"
@@ -45,7 +49,7 @@ class Cell:
 
 class Pattern:
     def __init__(self, cells=None):
-        self.cells: Set[Cell] = cells if cells is not None else set()
+        self.cells: Set[Cell] = copy.deepcopy(cells) if cells is not None else set()
 
     def add(self, cell:Cell):
         self.cells.add(cell)
@@ -56,6 +60,7 @@ class Pattern:
             cell.offset_y(point.y)
 
     def rot90(self) -> Self:
+        breakpoint()
         new_cells = {cell.rot90() for cell in self.cells}
         min_y = min([c.point.y for c in new_cells])
         for cell in new_cells:
@@ -80,7 +85,7 @@ class Pattern:
         for c in self.cells:
             if ((ys.start <= c.point.y and c.point.y < ys.stop) and
                 (xs.start <= c.point.x and c.point.x < xs.stop)):
-                new_pat.add(c)
+                new_pat.add(Cell(Point(c.point.x, c.point.y), c.sp))
         return new_pat
 
     def __and__(self, rhs: Self) -> Self:
@@ -128,6 +133,11 @@ class Card:
 
     @staticmethod
     def load_text(path: str):
+        # card = Card(0, "", Pattern(set([Cell(Point(3,2), False)])), 0, 0) ok
+        #pattern = Pattern()
+        #pattern.add(Cell(Point(3,2), False))
+        #card = Card(0, "", pattern, 0, 0)
+        #return card
         with open(path, "r") as f:
             lines = f.readlines()
 
@@ -261,18 +271,29 @@ class Stage:
 
     @staticmethod
     def load_text(path: str):
-        with open(path, "r") as f:
-            lines = f.readlines()
+        stage = Stage(0, "", Pattern(set([Cell(Point(3,3), False)])), 5, 5)
+        return stage
+        #with open(path, "r") as f:
+        #    lines = f.readlines()
 
-        width = max([len(line.rstrip()) for line in lines])
-        height = len(lines)
-        pattern = Pattern()
+        #width = max([len(line.rstrip()) for line in lines])
+        #height = len(lines)
+        #pattern = Pattern()
 
-        for y, line in enumerate(lines):
-            for x, p in enumerate(line):
-                if p == "x":
-                    pattern.add(Cell(Point(x, y)))
+        #for y, line in enumerate(lines):
+        #    for x, p in enumerate(line):
+        #        if p == "x":
+        #            pattern.add(Cell(Point(x, y)))
 
-        number = int(os.path.splitext(os.path.basename(path))[0])
-        name = "StraightStreet"
-        return Stage(number, name, pattern, width, height)
+        #number = int(os.path.splitext(os.path.basename(path))[0])
+        #name = "StraightStreet"
+        #return Stage(number, name, pattern, width, height)
+
+if __name__ == '__main__':
+    stage = Stage(0, "", Pattern(set([Cell(Point(3,3), False)])), 4, 4)
+    # neighbor = (2,3), (3,3), (4,3), ...
+    card = Card(0, "", Pattern(set([Cell(Point(3,3), False)])), 0, 0)
+
+    #print(stage.pattern.cells | card.pattern.cells)
+    place = Placement(card, Point(0,0), 0)
+    print(stage.neighbor_pattern(place))

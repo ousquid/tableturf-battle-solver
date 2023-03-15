@@ -38,7 +38,7 @@ class Solver:
                     print(f"rotation:{rotation}")
                 for point in stage.get_points():
                     placement = Placement(c, point, rotation)
-                    if stage.can_be_put(placement) and stage.neighbor_pattern(placement):
+                    if stage.neighbor_pattern(placement):
                         new_stage = stage.put_card(placement)
                         new_cards = copy.copy(cards)
                         new_cards.remove(c)
