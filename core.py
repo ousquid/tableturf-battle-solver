@@ -6,6 +6,7 @@ from enum import Enum
 from scipy import ndimage
 import colorama  as cr
 import math
+import numpy as np
 
 class Point:
     def __init__(self, x:int, y:int):
@@ -19,18 +20,28 @@ class Point:
         return Point(self.x + rhs.x, self.y + rhs.y)
 
 class Cell:
-    def __init__(self, point:Point, sp:bool):
+    def __init__(self, point:Point, sp:bool = False):
         self.point = point
         self.sp = sp
 
     def rot90(self) -> Self:
         return Cell(Point(self.point.y, -self.point.x), self.sp)
 
-    def offset_y(self, y:int) -> Self:
+    def offset_x(self, x:int) -> None:
+        self.point.x += x
+
+    def offset_y(self, y:int) -> None:
         self.point.y += y
 
     def __eq__(self, rhs:Self) -> bool:
         return self.point == rhs.point # ignore sp!!
+
+    def __hash__(self):
+        return hash((self.point.x, self.point.y)) # ignore sp!!
+
+    def __repr__(self):
+        #return f"<Cell: {self.point.x=}, {self.point.y=}>"
+        return f"({self.point.x}, {self.point.y})"
 
 class Pattern:
     def __init__(self, cells=None):
@@ -39,9 +50,14 @@ class Pattern:
     def add(self, cell:Cell):
         self.cells.add(cell)
 
+    def offset(self, point: Point):
+        for cell in self.cells:
+            cell.offset_x(point.x)
+            cell.offset_y(point.y)
+
     def rot90(self) -> Self:
         new_cells = {cell.rot90() for cell in self.cells}
-        min_y = min(new_cells, key=lambda c: c.point.y)
+        min_y = min([c.point.y for c in new_cells])
         for cell in new_cells:
             cell.offset_y(-min_y)
         return Pattern(new_cells)
@@ -49,10 +65,13 @@ class Pattern:
     def has(self, point:Point):
         return Cell(point, False) in self.cells
 
+    def __len__(self):
+        return len(self.cells)
+
     @property
     def shape(self) -> Tuple[int, int]:
-        y = max(self.cells, key=lambda c: c.point.y)
-        x = max(self.cells, key=lambda c: c.point.x)
+        y = max([c.point.y for c in self.cells])
+        x = max([c.point.x for c in self.cells])
         return (y, x)
 
     def __getitem__(self, item):
@@ -65,7 +84,18 @@ class Pattern:
         return new_pat
 
     def __and__(self, rhs: Self) -> Self:
+        #print("__and__")
+        #print(type(self.cells.pop()))
+        #print(type(rhs.cells.pop()))
+        # print(self.cells)
+        # print(rhs.cells)
+        # print(self.cells & rhs.cells)
+        # print(self.cells.intersection(rhs.cells))
         new_cells = self.cells & rhs.cells
+        return Pattern(new_cells)
+
+    def __or__(self, rhs: Self) -> Self:
+        new_cells = self.cells | rhs.cells
         return Pattern(new_cells)
 
     def empty(self) -> bool:
@@ -86,7 +116,7 @@ class Card:
         self,
         number: int,
         name: str,
-        pattern: Set[Cell],
+        pattern: Pattern,
         ink_spaces: int,
         sp_attack_cost: int,
     ):
@@ -129,50 +159,40 @@ class Placement:
         self.rotation = rotation
 
     def get_pattern(self) -> Pattern:
-        pattern = self.card.pattern
+        pattern = copy.deepcopy(self.card.pattern)
         for _ in range(int(self.rotation)):
             pattern = pattern.rot90()
+        pattern.offset(self.point)
         return pattern
 
     def __repr__(self):
         return f"<Card: {self.card.number}, {self.card.ink_spaces=}, {self.point.x=}, {self.point.y=}>"
 
 class Stage:
-    def __init__(self, number: int, name: str, pattern: Pattern):
+    def __init__(self, number: int, name: str, pattern: Pattern, width:int, height:int):
         self.number = number
         self.name = name
         self.pattern: Pattern = pattern
-        self.init_pattern = pattern.copy()
+        self.init_pattern = copy.deepcopy(pattern)
         self.place_hist = list()
+        self.width = width
+        self.height = height
 
     def get_points(self):
-        y, x = self.pattern.shape
-        for y in range(y):
-            for x in range(x):
+        for y in range(self.height):
+            for x in range(self.width):
                 if not self.pattern.has(Point(x, y)):
                     yield Point(x, y)
 
-    def get_slice_indices(self, place: Placement, pattern: Pattern):
-        pat_h, pat_w = pattern.shape
-        return (place.point.y, place.point.y + pat_h,
-                place.point.x, place.point.x + pat_w)
-
-    def get_slice(self, place: Placement) -> Pattern:
-        card_pat = place.get_pattern()
-        y_start, y_end, x_start, x_end = self.get_slice_indices(place, card_pat)
-        return self.pattern[y_start:y_end, x_start:x_end]
-
     def can_be_put(self, place: Placement) -> bool:
         card_pat = place.get_pattern()
-        card_h, card_w = card_pat.shape
-        stage_h, stage_w = self.pattern.shape
+        card_y, card_x = card_pat.shape
         # マップからはみ出ていないか
-        if card_h + place.point.y > stage_h or card_w + place.point.x > stage_w:
+        if card_y >= self.height or card_x >= self.width:
             return False
-        # 他のカードと重ならないか
-        stage_pat = self.get_slice(place)
 
-        if len(card_pat & stage_pat) > 0:
+        # 他のカードと重ならないか
+        if len(card_pat & self.pattern) > 0:
             return False
         return True
 
@@ -185,13 +205,22 @@ class Stage:
                     expand_pat.add(Cell(c.point + offset))
 
         card_pat = place.get_pattern()
-        return len((card_pat & expand_pat) > 0)
+        breakpoint()
+        #if (Cell(Point(3,3), False) in card_pat.cells):
+        #    breakpoint()
+        #else:
+        #    print(card_pat.cells)
+
+        #print("===neighbor_pattern===")
+        #print(card_pat.cells)
+        #print(expand_pat.cells)
+        #print((card_pat & expand_pat).cells)
+        return len(card_pat & expand_pat) > 0
 
     def put_card(self, place: Placement) -> Self:
         card_pat = place.get_pattern()
         new_stage = copy.deepcopy(self)
-        stage_pat = new_stage.get_slice(place)
-        stage_pat += card_pat
+        new_stage.pattern |= card_pat
 
         new_stage.place_hist.append(place)
         return new_stage
@@ -221,14 +250,11 @@ class Stage:
             cr.Fore.WHITE,
             cr.Fore.YELLOW]
 
-        canvas = np.full(self.pattern.shape, cr.Fore.WHITE + '.').astype(object)
+        canvas = np.full((self.height, self.width), cr.Fore.WHITE + '.').astype(object)
         canvas[self.init_pattern == 1] = cr.Fore.YELLOW + "0"
         for i, p in enumerate(self.place_hist):
-            card_pat = p.get_pattern()
-            y_start, y_end, x_start, x_end = self.get_slice_indices(p, card_pat)
-            canvas_pat = canvas[y_start:y_end, x_start:x_end]
-            canvas_pat[card_pat == 1] = colormap[i]+"0"
-            canvas_pat[card_pat == 2] = colormap[i]+"X"
+            for cell in p.get_pattern().cells:
+                canvas[cell.y, cell.x] = colormap[i] + ("0" if cell.sp else "X")
 
         for r in canvas:
             print("".join(r))
@@ -238,15 +264,15 @@ class Stage:
         with open(path, "r") as f:
             lines = f.readlines()
 
-        max_width = max([len(line.rstrip()) for line in lines])
-        max_height = len(lines)
-        pattern = np.zeros((max_height, max_width)).astype(np.uint8)
+        width = max([len(line.rstrip()) for line in lines])
+        height = len(lines)
+        pattern = Pattern()
 
         for y, line in enumerate(lines):
             for x, p in enumerate(line):
                 if p == "x":
-                    pattern[y, x] = 1
+                    pattern.add(Cell(Point(x, y)))
 
         number = int(os.path.splitext(os.path.basename(path))[0])
         name = "StraightStreet"
-        return Stage(number, name, pattern)
+        return Stage(number, name, pattern, width, height)

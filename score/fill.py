@@ -9,7 +9,7 @@ class FillEval:
         pass
 
     def max_eval(self, stage: Stage, cards: List[Card]) -> int:
-        return stage.pattern.sum() + sum([c.pattern.sum() for c in cards])
+        return len(stage.pattern.cells) + sum([len(c.pattern.cells) for c in cards])
 
     def eval(self, stage: Stage) -> int:
-        return stage.pattern.sum()
+        return len(stage.pattern.cells)

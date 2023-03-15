@@ -31,10 +31,10 @@ class Solver:
         sorted_cards = sorted(cards, key=lambda x: x.ink_spaces)
         max_eval = self.evaluator.max_eval(stage, cards)
         for c in sorted_cards:
-            if len(cards) == 6:
+            if len(cards) == 2:
                 print(f"card:{c}")
             for rotation in Rotation.get_values():
-                if len(cards) == 6:
+                if len(cards) == 2:
                     print(f"rotation:{rotation}")
                 for point in stage.get_points():
                     placement = Placement(c, point, rotation)
@@ -45,8 +45,10 @@ class Solver:
                         child_best_stage = self.search(new_stage, new_cards)
                         #if self.evaluator.eval(child_best_stage) == max_eval:
                         #    return child_best_stage
+                        print(self.evaluator.eval(child_best_stage))
                         if self.evaluator.eval(child_best_stage) > self.evaluator.eval(best_stage):
                             best_stage = child_best_stage
+                            print(best_stage.place_hist)
         return best_stage
 
 def main():
@@ -88,6 +90,3 @@ if __name__ == "__main__":
 # ********
 # ********
 #
-
-
-
