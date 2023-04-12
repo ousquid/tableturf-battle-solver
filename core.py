@@ -3,10 +3,8 @@ import os
 import glob
 import copy
 from enum import Enum
-from scipy import ndimage
 import colorama  as cr
 import math
-import numpy as np
 
 class Point:
     def __init__(self, x:int, y:int):
@@ -31,22 +29,18 @@ class Cell:
         return Cell(Point(self.point.y, -self.point.x), self.sp)
 
     def offset_x(self, x:int) -> Self:
-        #self.point.x += x
         return Cell(Point(self.point.x + x, self.point.y), self.sp)
 
     def offset_y(self, y:int) -> Self:
-        #self.point.y += y
         return Cell(Point(self.point.x, self.point.y + y), self.sp)
 
     def __eq__(self, rhs:Self) -> bool:
         return self.point == rhs.point # ignore sp!!
 
     def __hash__(self):
-        #return hash((self.point.x, self.point.y)) # ignore sp!!
         return hash(self.point)
 
     def __repr__(self):
-        #return f"<Cell: {self.point.x=}, {self.point.y=}>"
         return f"({self.point.x}, {self.point.y})"
 
 class Pattern:
@@ -65,7 +59,6 @@ class Pattern:
         self.cells = new_cells
 
     def rot90(self) -> Self:
-        #breakpoint()
         rotated_cells = {cell.rot90() for cell in self.cells}
         min_y = min([c.point.y for c in rotated_cells])
         new_cells = set()
@@ -95,13 +88,6 @@ class Pattern:
         return new_pat
 
     def __and__(self, rhs: Self) -> Self:
-        #print("__and__")
-        #print(type(self.cells.pop()))
-        #print(type(rhs.cells.pop()))
-        # print(self.cells)
-        # print(rhs.cells)
-        # print(self.cells & rhs.cells)
-        # print(self.cells.intersection(rhs.cells))
         new_cells = self.cells & rhs.cells
         return Pattern(new_cells)
 
@@ -139,16 +125,9 @@ class Card:
 
     @staticmethod
     def load_text(path: str):
-        # card = Card(0, "", Pattern(set([Cell(Point(3,2), False)])), 0, 0) ok
-        #pattern = Pattern()
-        #pattern.add(Cell(Point(3,2), False))
-        #card = Card(0, "", pattern, 0, 0)
-        #return card
         with open(path, "r") as f:
             lines = f.readlines()
 
-        max_width = max([len(line.rstrip()) for line in lines])
-        max_height = len(lines)
         pattern = Pattern()
 
         for y, line in enumerate(lines):
@@ -203,7 +182,6 @@ class Stage:
     def can_be_put(self, place: Placement) -> bool:
         card_pat = place.get_pattern()
         card_y, card_x = card_pat.shape
-        #breakpoint()
         # マップからはみ出ていないか
         if card_y >= self.height or card_x >= self.width:
             return False
@@ -222,16 +200,6 @@ class Stage:
                     expand_pat.add(Cell(c.point + offset))
 
         card_pat = place.get_pattern()
-        #breakpoint()
-        #if (Cell(Point(3,3), False) in card_pat.cells):
-        #    breakpoint()
-        #else:
-        #    print(card_pat.cells)
-
-        #print("===neighbor_pattern===")
-        #print(card_pat.cells)
-        #print(expand_pat.cells)
-        #print((card_pat & expand_pat).cells)
         return len(card_pat & expand_pat) > 0
 
     def put_card(self, place: Placement) -> Self:
@@ -241,12 +209,6 @@ class Stage:
 
         new_stage.place_hist.append(place)
         return new_stage
-
-    # def evaluator(self) -> int:
-    #     return FillEval.eval(self)
-
-    # def max_eval(self, cards: List[Card]) -> int:
-    #     return FillEval.max_eval(self, cards)
 
     def draw(self):
         colormap = [
@@ -268,21 +230,17 @@ class Stage:
             cr.Fore.YELLOW]
 
         canvas = np.full((self.height, self.width), cr.Fore.WHITE + '.').astype(object)
-        #canvas = np.full((20, 20), cr.Fore.WHITE + '.').astype(object)
-        #canvas[self.init_pattern == 1] = cr.Fore.YELLOW + "0"
         for cell in self.init_pattern.cells:
             canvas[cell.point.y, cell.point.x] = cr.Fore.YELLOW + "0"
         for i, p in enumerate(self.place_hist):
             for cell in p.get_pattern().cells:
-                canvas[cell.point.y, cell.point.x] = colormap[i] + ("0" if cell.sp else "X")
+                canvas[cell.point.y, cell.point.x] = colormap[i] + ("X" if cell.sp else "0")
 
         for r in canvas:
             print("".join(r))
 
     @staticmethod
     def load_text(path: str):
-        #stage = Stage(0, "", Pattern(set([Cell(Point(3,3), False)])), 5, 5)
-        #return stage
         with open(path, "r") as f:
             lines = f.readlines()
 
@@ -298,12 +256,3 @@ class Stage:
         number = int(os.path.splitext(os.path.basename(path))[0])
         name = "StraightStreet"
         return Stage(number, name, pattern, width, height)
-
-if __name__ == '__main__':
-    stage = Stage(0, "", Pattern(set([Cell(Point(3,3), False)])), 4, 4)
-    # neighbor = (2,3), (3,3), (4,3), ...
-    card = Card(0, "", Pattern(set([Cell(Point(3,3), False)])), 0, 0)
-
-    #print(stage.pattern.cells | card.pattern.cells)
-    place = Placement(card, Point(0,0), 0)
-    print(stage.neighbor_pattern(place))
