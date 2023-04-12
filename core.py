@@ -30,11 +30,13 @@ class Cell:
     def rot90(self) -> Self:
         return Cell(Point(self.point.y, -self.point.x), self.sp)
 
-    def offset_x(self, x:int) -> None:
-        self.point.x += x
+    def offset_x(self, x:int) -> Self:
+        #self.point.x += x
+        return Cell(Point(self.point.x + x, self.point.y), self.sp)
 
-    def offset_y(self, y:int) -> None:
-        self.point.y += y
+    def offset_y(self, y:int) -> Self:
+        #self.point.y += y
+        return Cell(Point(self.point.x, self.point.y + y), self.sp)
 
     def __eq__(self, rhs:Self) -> bool:
         return self.point == rhs.point # ignore sp!!
@@ -55,16 +57,20 @@ class Pattern:
         self.cells.add(cell)
 
     def offset(self, point: Point):
+        new_cells = set()
         for cell in self.cells:
-            cell.offset_x(point.x)
-            cell.offset_y(point.y)
+            new_cell = cell.offset_x(point.x)
+            new_cell = new_cell.offset_y(point.y)
+            new_cells.add(new_cell)
+        self.cells = new_cells
 
     def rot90(self) -> Self:
-        breakpoint()
-        new_cells = {cell.rot90() for cell in self.cells}
-        min_y = min([c.point.y for c in new_cells])
-        for cell in new_cells:
-            cell.offset_y(-min_y)
+        #breakpoint()
+        rotated_cells = {cell.rot90() for cell in self.cells}
+        min_y = min([c.point.y for c in rotated_cells])
+        new_cells = set()
+        for cell in rotated_cells:
+            new_cells.add(cell.offset_y(-min_y))
         return Pattern(new_cells)
 
     def has(self, point:Point):
@@ -197,6 +203,7 @@ class Stage:
     def can_be_put(self, place: Placement) -> bool:
         card_pat = place.get_pattern()
         card_y, card_x = card_pat.shape
+        #breakpoint()
         # マップからはみ出ていないか
         if card_y >= self.height or card_x >= self.width:
             return False
@@ -215,7 +222,7 @@ class Stage:
                     expand_pat.add(Cell(c.point + offset))
 
         card_pat = place.get_pattern()
-        breakpoint()
+        #breakpoint()
         #if (Cell(Point(3,3), False) in card_pat.cells):
         #    breakpoint()
         #else:
@@ -261,33 +268,36 @@ class Stage:
             cr.Fore.YELLOW]
 
         canvas = np.full((self.height, self.width), cr.Fore.WHITE + '.').astype(object)
-        canvas[self.init_pattern == 1] = cr.Fore.YELLOW + "0"
+        #canvas = np.full((20, 20), cr.Fore.WHITE + '.').astype(object)
+        #canvas[self.init_pattern == 1] = cr.Fore.YELLOW + "0"
+        for cell in self.init_pattern.cells:
+            canvas[cell.point.y, cell.point.x] = cr.Fore.YELLOW + "0"
         for i, p in enumerate(self.place_hist):
             for cell in p.get_pattern().cells:
-                canvas[cell.y, cell.x] = colormap[i] + ("0" if cell.sp else "X")
+                canvas[cell.point.y, cell.point.x] = colormap[i] + ("0" if cell.sp else "X")
 
         for r in canvas:
             print("".join(r))
 
     @staticmethod
     def load_text(path: str):
-        stage = Stage(0, "", Pattern(set([Cell(Point(3,3), False)])), 5, 5)
-        return stage
-        #with open(path, "r") as f:
-        #    lines = f.readlines()
+        #stage = Stage(0, "", Pattern(set([Cell(Point(3,3), False)])), 5, 5)
+        #return stage
+        with open(path, "r") as f:
+            lines = f.readlines()
 
-        #width = max([len(line.rstrip()) for line in lines])
-        #height = len(lines)
-        #pattern = Pattern()
+        width = max([len(line.rstrip()) for line in lines])
+        height = len(lines)
+        pattern = Pattern()
 
-        #for y, line in enumerate(lines):
-        #    for x, p in enumerate(line):
-        #        if p == "x":
-        #            pattern.add(Cell(Point(x, y)))
+        for y, line in enumerate(lines):
+            for x, p in enumerate(line):
+                if p == "x":
+                    pattern.add(Cell(Point(x, y)))
 
-        #number = int(os.path.splitext(os.path.basename(path))[0])
-        #name = "StraightStreet"
-        #return Stage(number, name, pattern, width, height)
+        number = int(os.path.splitext(os.path.basename(path))[0])
+        name = "StraightStreet"
+        return Stage(number, name, pattern, width, height)
 
 if __name__ == '__main__':
     stage = Stage(0, "", Pattern(set([Cell(Point(3,3), False)])), 4, 4)

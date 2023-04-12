@@ -38,17 +38,17 @@ class Solver:
                     print(f"rotation:{rotation}")
                 for point in stage.get_points():
                     placement = Placement(c, point, rotation)
-                    if stage.neighbor_pattern(placement):
+                    if stage.can_be_put(placement) and stage.neighbor_pattern(placement):
                         new_stage = stage.put_card(placement)
                         new_cards = copy.copy(cards)
                         new_cards.remove(c)
                         child_best_stage = self.search(new_stage, new_cards)
-                        #if self.evaluator.eval(child_best_stage) == max_eval:
-                        #    return child_best_stage
-                        print(self.evaluator.eval(child_best_stage))
+                        if self.evaluator.eval(child_best_stage) == max_eval:
+                            return child_best_stage
+                        #print(self.evaluator.eval(child_best_stage))
                         if self.evaluator.eval(child_best_stage) > self.evaluator.eval(best_stage):
                             best_stage = child_best_stage
-                            print(best_stage.place_hist)
+                            #print(best_stage.place_hist)
         return best_stage
 
 def main():
@@ -56,14 +56,15 @@ def main():
     # cards = Card.load_dir("cards/*.txt")
     cards = [
         Card.load_text(txt)
-        # for txt in ["cards/001.txt", "cards/002.txt", "cards/003.txt", "cards/004.txt", "cards/095.txt", "cards/144.txt",]
-        for txt in ["cards/001.txt", "cards/002.txt"]
+        for txt in ["cards/001.txt", "cards/002.txt", "cards/003.txt", "cards/004.txt", "cards/095.txt", "cards/144.txt",]
+        # for txt in ["cards/001.txt", "cards/002.txt"]
     ]
     solver = Solver()
-    return solver.search_combo(2, stage, cards)
+    return solver.search_combo(6, stage, cards)
 
 if __name__ == "__main__":
     ans = main()
+    ans.draw()
 #
 # ________
 # ________
