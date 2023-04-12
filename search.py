@@ -2,7 +2,6 @@ from typing import List, Tuple, Self
 import copy
 from enum import Enum
 from itertools import combinations, permutations
-import numpy as np
 
 from score.fill import FillEval
 from core import Stage, Card, Placement, Rotation
@@ -31,11 +30,7 @@ class Solver:
         sorted_cards = sorted(cards, key=lambda x: x.ink_spaces)
         max_eval = self.evaluator.max_eval(stage, cards)
         for c in sorted_cards:
-            if len(cards) == 6:
-                print(f"card:{c}")
             for rotation in Rotation.get_values():
-                if len(cards) == 6:
-                    print(f"rotation:{rotation}")
                 for point in stage.get_points():
                     placement = Placement(c, point, rotation)
                     if stage.can_be_put(placement) and stage.neighbor_pattern(placement):
@@ -43,8 +38,8 @@ class Solver:
                         new_cards = copy.copy(cards)
                         new_cards.remove(c)
                         child_best_stage = self.search(new_stage, new_cards)
-                        #if self.evaluator.eval(child_best_stage) == max_eval:
-                        #    return child_best_stage
+                        if self.evaluator.eval(child_best_stage) == max_eval:
+                            return child_best_stage
                         if self.evaluator.eval(child_best_stage) > self.evaluator.eval(best_stage):
                             best_stage = child_best_stage
         return best_stage
@@ -54,40 +49,11 @@ def main():
     # cards = Card.load_dir("cards/*.txt")
     cards = [
         Card.load_text(txt)
-        # for txt in ["cards/001.txt", "cards/002.txt", "cards/003.txt", "cards/004.txt", "cards/095.txt", "cards/144.txt",]
-        for txt in ["cards/001.txt", "cards/002.txt"]
+        for txt in ["cards/001.txt", "cards/002.txt", "cards/003.txt", "cards/004.txt", "cards/095.txt", "cards/144.txt",]
     ]
     solver = Solver()
-    return solver.search_combo(2, stage, cards)
+    return solver.search_combo(6, stage, cards)
 
 if __name__ == "__main__":
     ans = main()
-#
-# ________
-# ________
-# ________
-# ________
-# ________
-# ________
-# ________
-#
-# ________
-# _*____*_
-# ___*____
-# *****_**
-# _*__*___
-# __*_____
-# ********
-#
-# ________
-# ________
-# ________
-# _____*__
-# _____**_
-# ********
-# ********
-# ********
-#
-
-
-
+    ans.draw()
