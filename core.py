@@ -31,11 +31,8 @@ class Cell:
     def rot90(self) -> Self:
         return Cell(Point(self.point.y, -self.point.x), self.sp)
 
-    def offset_x(self, x:int) -> Self:
-        return Cell(Point(self.point.x + x, self.point.y), self.sp)
-
-    def offset_y(self, y:int) -> Self:
-        return Cell(Point(self.point.x, self.point.y + y), self.sp)
+    def offset(self, x: int = 0, y:int = 0) -> Self:
+        return Cell(Point(self.point.x + x, self.point.y + y), self.sp)
 
     def __eq__(self, rhs:Self) -> bool:
         return self.point == rhs.point # ignore sp!!
@@ -57,19 +54,14 @@ class Pattern:
         self.cells.add(cell)
 
     def offset(self, point: Point):
-        new_cells = set()
-        for cell in self.cells:
-            new_cell = cell.offset_x(point.x)
-            new_cell = new_cell.offset_y(point.y)
-            new_cells.add(new_cell)
-        self.cells = new_cells
+        self.cells = {cell.offset(point.x, point.y) for cell in self.cells}
 
     def rot90(self) -> Self:
         rotated_cells = {cell.rot90() for cell in self.cells}
         min_y = min([c.point.y for c in rotated_cells])
         new_cells = set()
         for cell in rotated_cells:
-            new_cells.add(cell.offset_y(-min_y))
+            new_cells.add(cell.offset(y=-min_y))
         return Pattern(new_cells)
 
     def has(self, point:Point):
@@ -125,7 +117,10 @@ class Card:
     ):
         self.number = number
         self.name = name
-        self.pattern = pattern
+        self.patterns = [pattern]
+        for _ in range(3):
+            rot_pattern = self.patterns[-1].rot90()
+            self.patterns.append(rot_pattern)
         self.ink_spaces = ink_spaces
         self.sp_attack_cost = sp_attack_cost
 
@@ -160,9 +155,7 @@ class Placement:
         self.rotation = rotation
 
     def get_pattern(self) -> Pattern:
-        pattern = Pattern(self.card.pattern.cells)
-        for _ in range(int(self.rotation)):
-            pattern = pattern.rot90()
+        pattern = Pattern(self.card.patterns[self.rotation].cells)
         pattern.offset(self.point)
         return pattern
 
