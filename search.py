@@ -10,17 +10,16 @@ class Solver:
     def __init__(self):
         self.evaluator = FillEval()
 
-    def search_combo(self, n: int, stage: Stage, cards: List[Card]) -> Stage:
-        best_combination = stage
+    def search_combo(self, n: int, cards: List[Card]) -> Stage:
+        best_permutation = Stage()
         for c in combinations(cards, n):
-            best_permutation = stage
-            for p in permutations(c, n):
-                ans = self.search(copy.deepcopy(stage), list(p))
+            print(f"combination: {c}")
+            for head, *tail in permutations(c, n):
+                print(f"permutation: {head}")
+                ans = self.search(Stage.load_card(head), tail)
                 if self.evaluator.eval(ans) > self.evaluator.eval(best_permutation):
                     best_permutation = ans
-            if self.evaluator.eval(best_permutation) > self.evaluator.eval(best_combination):
-                best_combination = best_permutation
-        return best_combination
+        return best_permutation
 
     def search(self, stage: Stage, cards: List[Card]) -> Stage:
         if len(cards) == 0:
@@ -52,7 +51,7 @@ def main():
         for txt in ["cards/001.txt", "cards/002.txt", "cards/003.txt", "cards/004.txt", "cards/095.txt", "cards/144.txt",]
     ]
     solver = Solver()
-    return solver.search_combo(6, stage, cards)
+    return solver.search_combo(6, cards)
 
 if __name__ == "__main__":
     ans = main()

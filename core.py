@@ -20,6 +20,9 @@ class Point:
     def __add__(self, rhs:Self) -> Self:
         return Point(self.x + rhs.x, self.y + rhs.y)
 
+    def clone(self) -> Self:
+        return Point(self.x, self.y)
+
 class Cell:
     def __init__(self, point:Point, sp:bool = False):
         self.point = point
@@ -43,9 +46,12 @@ class Cell:
     def __repr__(self):
         return f"({self.point.x}, {self.point.y})"
 
+    def clone(self) -> Self:
+        return Cell(self.point.clone(), self.sp)
+
 class Pattern:
     def __init__(self, cells=None):
-        self.cells: Set[Cell] = copy.deepcopy(cells) if cells is not None else set()
+        self.cells: Set[Cell] = { c.clone() for c in cells } if cells is not None else set()
 
     def add(self, cell:Cell):
         self.cells.add(cell)
@@ -154,7 +160,7 @@ class Placement:
         self.rotation = rotation
 
     def get_pattern(self) -> Pattern:
-        pattern = copy.deepcopy(self.card.pattern)
+        pattern = Pattern(self.card.pattern.cells)
         for _ in range(int(self.rotation)):
             pattern = pattern.rot90()
         pattern.offset(self.point)
@@ -164,7 +170,7 @@ class Placement:
         return f"<Card: {self.card.number}, {self.card.ink_spaces=}, {self.point.x=}, {self.point.y=}>"
 
 class Stage:
-    def __init__(self, number: int, name: str, pattern: Pattern, width:int, height:int):
+    def __init__(self, number: int = 0, name: str = "Dummy", pattern: Pattern = Pattern(), width:int = 1, height:int = 1):
         self.number = number
         self.name = name
         self.pattern: Pattern = pattern
@@ -262,3 +268,16 @@ class Stage:
         number = int(os.path.splitext(os.path.basename(path))[0])
         name = "StraightStreet"
         return Stage(number, name, pattern, width, height)
+
+    @staticmethod
+    def load_card(card: Card) -> Self:
+        number = 0
+        name = "InfiniteField"
+        pattern = Pattern()
+        width = 20
+        height = 20
+        new_stage = Stage(number, name, pattern, width, height)
+        placement = Placement(card, Point(10,10), Rotation.RIGHT.value)
+        new_stage.put_card(placement)
+
+        return new_stage

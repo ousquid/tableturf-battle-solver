@@ -374,6 +374,17 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 
 [[package]]
+name = "snakeviz"
+version = "2.2.0"
+description = "A web-based viewer for Python profiler output"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+tornado = ">=2.0"
+
+[[package]]
 name = "stack-data"
 version = "0.6.1"
 description = "Extract data from python stack frames and tracebacks for informative displays"
@@ -437,7 +448,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.11"
-content-hash = "d6bda287a1a4262fb9e75e273032d8dd03709467c93abde4a54074c507527a3a"
+content-hash = "ccbc760d5ab243bdef906afa769f9ce1af402adf31f7bfa7e4afb02ab379dfe2"
 
 [metadata.files]
 appnope = [
@@ -739,6 +750,10 @@ pyzmq = [
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
+]
+snakeviz = [
+    {file = "snakeviz-2.2.0-py2.py3-none-any.whl", hash = "sha256:569e2d71c47f80a886aa6e70d6405cb6d30aa3520969ad956b06f824c5f02b8e"},
+    {file = "snakeviz-2.2.0.tar.gz", hash = "sha256:7bfd00be7ae147eb4a170a471578e1cd3f41f803238958b6b8efcf2c698a6aa9"},
 ]
 stack-data = [
     {file = "stack_data-0.6.1-py3-none-any.whl", hash = "sha256:960cb054d6a1b2fdd9cbd529e365b3c163e8dabf1272e02cfe36b58403cff5c6"},
