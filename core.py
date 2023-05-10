@@ -229,12 +229,18 @@ class Stage:
             cr.Fore.WHITE,
             cr.Fore.YELLOW]
 
-        canvas = np.full((self.height, self.width), cr.Fore.WHITE + '.').astype(object)
+        canvas = []
+        for h in range(self.height):
+            new_row = []
+            for w in range(self.width):
+                new_row.append(cr.Fore.WHITE + '.')
+            canvas.append(new_row)
+
         for cell in self.init_pattern.cells:
-            canvas[cell.point.y, cell.point.x] = cr.Fore.YELLOW + "0"
+            canvas[cell.point.y][cell.point.x] = cr.Fore.YELLOW + "0"
         for i, p in enumerate(self.place_hist):
             for cell in p.get_pattern().cells:
-                canvas[cell.point.y, cell.point.x] = colormap[i] + ("X" if cell.sp else "0")
+                canvas[cell.point.y][cell.point.x] = colormap[i] + ("X" if cell.sp else "0")
 
         for r in canvas:
             print("".join(r))
