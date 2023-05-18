@@ -61,9 +61,18 @@ class Pattern:
         rotated_cells = {cell.rot90() for cell in self.cells}
         min_y = min([c.point.y for c in rotated_cells])
         new_cells = set()
+        # TODO: Pattern(rotated_cells)を作って、Pattern.offsetを適用する
         for cell in rotated_cells:
             new_cells.add(cell.offset(y=-min_y))
         return Pattern(new_cells)
+
+    def get_x_min_max(self) -> Tuple[int, int]:
+        xs = [cell.point.x for cell in self.cells]
+        return (min(xs), max(xs))
+
+    def get_y_min_max(self) -> Tuple[int, int]:
+        ys = [cell.point.y for cell in self.cells]
+        return (min(ys), max(ys))
 
     def has(self, point:Point):
         return Cell(point, False) in self.cells
@@ -164,7 +173,7 @@ class Placement:
         return f"<Card: {self.card.number}, {self.card.ink_spaces=}, {self.point.x=}, {self.point.y=}>"
 
 class Stage:
-    def __init__(self, number: int = 0, name: str = "Dummy", pattern: Pattern = Pattern(), width:int = 1, height:int = 1):
+    def __init__(self, number: int = 0, name: str = "Dummy", pattern: Pattern = Pattern(), width:int = 1, height:int = 1, flexible:bool = False):
         self.number = number
         self.name = name
         self.pattern: Pattern = pattern
@@ -172,6 +181,7 @@ class Stage:
         self.place_hist = list()
         self.width = width
         self.height = height
+        self.flexible = flexible
 
     def get_points(self):
         for y in range(self.height):
@@ -182,9 +192,10 @@ class Stage:
     def can_be_put(self, place: Placement) -> bool:
         card_pat = place.get_pattern()
         card_y, card_x = card_pat.shape
-        # マップからはみ出ていないか
-        if card_y >= self.height or card_x >= self.width:
-            return False
+        if not self.flexible:
+            # マップからはみ出ていないか
+            if card_y >= self.height or card_x >= self.width:
+                return False
 
         # 他のカードと重ならないか
         if len(card_pat & self.pattern) > 0:
@@ -208,6 +219,15 @@ class Stage:
         new_stage.pattern |= card_pat
 
         new_stage.place_hist.append(place)
+        if self.flexible:
+            # ステージの左上に合わせる
+            x_min, x_max = new_stage.pattern.get_x_min_max()
+            y_min, y_max = new_stage.pattern.get_y_min_max()
+            # 各Cellをずらす
+            new_stage.pattern.offset(Point(-x_min, -y_min))
+            # ステージの大きさを補正
+            new_stage.height = y_max - y_min + 1
+            new_stage.width = x_max - x_min + 1
         return new_stage
 
     def draw(self):
@@ -230,6 +250,7 @@ class Stage:
             cr.Fore.YELLOW]
 
         canvas = []
+        print(self.pattern.cells)
         for h in range(self.height):
             new_row = []
             for w in range(self.width):
@@ -268,10 +289,10 @@ class Stage:
         number = 0
         name = "InfiniteField"
         pattern = Pattern()
-        width = 20
-        height = 20
-        new_stage = Stage(number, name, pattern, width, height)
-        placement = Placement(card, Point(10,10), Rotation.RIGHT.value)
-        new_stage.put_card(placement)
+        width = 1
+        height = 1
+        new_stage = Stage(number, name, pattern, width, height, flexible=True)
+        placement = Placement(card, Point(0,0), Rotation.RIGHT.value)
+        new_stage = new_stage.put_card(placement)
 
         return new_stage
