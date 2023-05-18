@@ -60,11 +60,9 @@ class Pattern:
     def rot90(self) -> Self:
         rotated_cells = {cell.rot90() for cell in self.cells}
         min_y = min([c.point.y for c in rotated_cells])
-        new_cells = set()
-        # TODO: Pattern(rotated_cells)を作って、Pattern.offsetを適用する
-        for cell in rotated_cells:
-            new_cells.add(cell.offset(y=-min_y))
-        return Pattern(new_cells)
+        new_pat = Pattern(rotated_cells)
+        new_pat.offset(Point(0,-min_y))
+        return new_pat
 
     def get_x_min_max(self) -> Tuple[int, int]:
         xs = [cell.point.x for cell in self.cells]
@@ -250,7 +248,6 @@ class Stage:
             cr.Fore.YELLOW]
 
         canvas = []
-        print(self.pattern.cells)
         for h in range(self.height):
             new_row = []
             for w in range(self.width):
