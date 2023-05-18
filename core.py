@@ -1,4 +1,5 @@
-from typing import List, Tuple, Self, Set
+from typing import List, Tuple, Set
+from typing_extensions import Self
 import os
 import glob
 import copy

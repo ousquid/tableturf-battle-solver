@@ -1,10 +1,21 @@
-from typing import List, Tuple, Self
+from typing import List, Tuple
+from typing_extensions import Self
 import copy
 from enum import Enum
 from itertools import combinations, permutations
-
+import tqdm
 from score.fill import FillEval
 from core import Stage, Card, Placement, Rotation
+import time
+
+def timer_decorator(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        print(f"{func.__name__} took {end_time - start_time:.2f} seconds to execute.")
+        return result
+    return wrapper
 
 class Solver:
     def __init__(self):
@@ -13,9 +24,7 @@ class Solver:
     def search_combo(self, n: int, cards: List[Card]) -> Stage:
         best_permutation = Stage()
         for c in combinations(cards, n):
-            print(f"combination: {c}")
-            for head, *tail in permutations(c, n):
-                print(f"permutation: {head}")
+            for head, *tail in tqdm.tqdm(list(permutations(c, n))):
                 ans = self.search(Stage.load_card(head), tail)
                 if self.evaluator.eval(ans) > self.evaluator.eval(best_permutation):
                     best_permutation = ans
