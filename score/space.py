@@ -2,14 +2,14 @@
 from typing import List
 import sys
 sys.path.append('../')
-from core import Stage, Card, Placement
+from core import Stage, Card
 
-class FillEval:
+class SpaceEval:
     def __init__(self):
         pass
 
     def max_eval(self, stage: Stage, cards: List[Card]) -> int:
         return len(stage.pattern.cells) + sum([len(c.patterns[0].cells) for c in cards])
 
-    def eval(self, stage: Stage, placement: Placement) -> int:
-        return len(stage.pattern.cells) + len(placement.get_pattern().cells)
+    def eval(self, stage: Stage) -> int:
+        return len(stage.pattern.cells)
