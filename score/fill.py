@@ -8,8 +8,11 @@ class FillEval:
     def __init__(self):
         pass
 
-    def max_eval(self, stage: Stage, cards: List[Card]) -> int:
+    def max_eval(self, stage: Stage, cards: List[Card]) -> float:
         return len(stage.pattern.cells) + sum([len(c.patterns[0].cells) for c in cards])
 
-    def eval(self, stage: Stage, placement: Placement) -> int:
-        return len(stage.pattern.cells) + len(placement.get_pattern().cells)
+    def eval(self, stage: Stage) -> float:
+        return len(stage.pattern.cells)
+
+    def eval_put(self, stage: Stage, placement: Placement) -> float:
+        return len(placement.get_pattern().cells)

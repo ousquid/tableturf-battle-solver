@@ -1,10 +1,11 @@
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 from typing_extensions import Self
 import copy
 from enum import Enum
 from itertools import combinations, permutations
 import tqdm
-from score.fill import FillEval
+#from score.fill import FillEval
+from score.space import SpaceEval
 from core import Stage, Card, Placement, Rotation
 import time
 
@@ -19,7 +20,7 @@ def timer_decorator(func):
 
 class Solver:
     def __init__(self):
-        self.evaluator = FillEval()
+        self.evaluator = SpaceEval()
 
     def search_combo(self, n: int, cards: List[Card]) -> Stage:
         best_permutation = Stage()
@@ -37,20 +38,31 @@ class Solver:
         best_stage = stage
         sorted_cards = sorted(cards, key=lambda x: x.ink_spaces)
         max_eval = self.evaluator.max_eval(stage, cards)
+        top_n = 2
         for c in sorted_cards:
+            point_evals: Dict(Placement, float) = {}
             for rotation in Rotation.get_values():
                 for point in stage.get_points():
                     placement = Placement(c, point, rotation)
-                    if stage.can_be_put(placement) and stage.neighbor_pattern(placement):
-                        new_stage = stage.put_card(placement)
-                        new_cards = copy.copy(cards)
-                        new_cards.remove(c)
-                        child_best_stage = self.search(new_stage, new_cards)
-                        if self.evaluator.eval(child_best_stage) == max_eval:
-                            return child_best_stage
-                        if self.evaluator.eval(child_best_stage) > self.evaluator.eval(best_stage):
-                            best_stage = child_best_stage
-        return best_stage
+                    if not (stage.can_be_put(placement) and stage.neighbor_pattern(placement)):
+                        continue
+                    curval = self.evaluator.eval_put(stage, placement)
+                    if len(point_evals) < top_n:
+                        point_evals[placement] = curval
+                    elif curval > min(point_evals.values()):
+                        min_eval_key = min(point_evals, key=point_evals.get)
+                        del point_evals[min_eval_key]
+                        point_evals[placement] = curval
+
+        best = (Stage(), self.evaluator.eval(Stage()))  # (stage, eval)
+        for placement in point_evals.keys():
+            new_stage = stage.put_card(placement)
+            new_cards = copy.copy(cards)
+            new_cards.remove(c)
+            child_best_stage = self.search(new_stage, new_cards)
+            if self.evaluator.eval(child_best_stage) > best[1]:
+                best = (child_best_stage, self.evaluator.eval(child_best_stage))
+        return best[0]
 
 def main():
     stage = Stage.load_text("stages/01.txt")

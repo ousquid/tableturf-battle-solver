@@ -200,14 +200,19 @@ class Stage:
             return False
         return True
 
-    def neighbor_pattern(self, place: Placement) -> bool:
+    def get_neighbor_pattern(self) -> Pattern:
         expand_pat = Pattern()
         for c in self.pattern.cells:
             for ox in [-1, 0, 1]:
                 for oy in [-1, 0, 1]:
                     offset = Point(ox, oy)
-                    expand_pat.add(Cell(c.point + offset))
+                    new_point = c.point + offset
+                    if not self.pattern.has(new_point):
+                        expand_pat.add(Cell(new_point))
+        return expand_pat
 
+    def neighbor_pattern(self, place: Placement) -> bool:
+        expand_pat = self.get_neighbor_pattern()
         card_pat = place.get_pattern()
         return len(card_pat & expand_pat) > 0
 
